@@ -644,7 +644,7 @@ async function detectFaceLoop() {
       }
     } catch(e) {}
 
-    setTimeout(detect, 200); // 5fps untuk hemat baterai
+    setTimeout(detect, 800); // slower = less conflict with MediaPipe
   };
   detect();
   startRenderLoop();
@@ -760,26 +760,63 @@ function onHandResults(results) {
   }
 }
 
+function isPalmFacing(landmarks) {
+  // Check if palm is facing camera using wrist and finger base positions
+  // landmark 0=wrist, 5=index_base, 17=pinky_base
+  const wrist = landmarks[0];
+  const indexBase = landmarks[5];
+  const pinkyBase = landmarks[17];
+  // Cross product Z to determine orientation
+  const dx1 = indexBase.x - wrist.x;
+  const dy1 = indexBase.y - wrist.y;
+  const dx2 = pinkyBase.x - wrist.x;
+  const dy2 = pinkyBase.y - wrist.y;
+  const cross = dx1 * dy2 - dy1 * dx2;
+  return cross > 0; // positive = palm facing, negative = back of hand
+}
+
 function countFingers(landmarks, handedness) {
-  // Tip indices: thumb=4, index=8, middle=12, ring=16, pinky=20
-  // Base indices: thumb=2, index=5, middle=9, ring=13, pinky=17
-  const tips = [4, 8, 12, 16, 20];
-  const bases = [2, 5, 9, 13, 17];
+  const tips =  [4, 8, 12, 16, 20];
+  const bases = [2, 5,  9, 13, 17];
   let count = 0;
 
-  // Thumb: check horizontal (mirrored camera)
+  const palmFacing = isPalmFacing(landmarks);
+  // For mirrored camera, flip the palm detection per handedness
+  const isLeftInFrame = handedness === 'Left';
+
+  // Thumb: horizontal check, depends on hand orientation
   const thumbTip = landmarks[4];
+  const thumbIp  = landmarks[3];
   const thumbBase = landmarks[2];
-  // For mirrored/front camera
-  if (handedness === 'Left') {
-    if (thumbTip.x > thumbBase.x) count++;
+  if (palmFacing) {
+    // Palm facing: left hand thumb extends right, right hand extends left (mirrored)
+    if (isLeftInFrame) {
+      count += thumbTip.x > thumbBase.x ? 1 : 0;
+    } else {
+      count += thumbTip.x < thumbBase.x ? 1 : 0;
+    }
   } else {
-    if (thumbTip.x < thumbBase.x) count++;
+    // Back of hand: opposite
+    if (isLeftInFrame) {
+      count += thumbTip.x < thumbBase.x ? 1 : 0;
+    } else {
+      count += thumbTip.x > thumbBase.x ? 1 : 0;
+    }
   }
 
-  // Other 4 fingers: tip above base (y axis inverted in screen)
+  // 4 fingers: tip vs PIP joint (more reliable than base)
+  const pips = [6, 10, 14, 18]; // PIP joints
   for (let i = 1; i < 5; i++) {
-    if (landmarks[tips[i]].y < landmarks[bases[i]].y) count++;
+    const tipY  = landmarks[tips[i]].y;
+    const pipY  = landmarks[pips[i-1]].y;
+    const baseY = landmarks[bases[i]].y;
+    if (palmFacing) {
+      // Finger extended: tip above PIP (smaller y)
+      count += tipY < pipY ? 1 : 0;
+    } else {
+      // Back of hand: same logic, tip still above PIP when extended
+      count += tipY < pipY ? 1 : 0;
+    }
   }
 
   return count;
