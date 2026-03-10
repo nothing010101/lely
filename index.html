@@ -45,7 +45,7 @@ body::before {
 
 .cam-section { background:#000; border:1px solid rgba(0,255,231,.2); border-radius:12px; overflow:hidden; }
 .cam-wrap { position:relative; width:100%; aspect-ratio:4/3; max-height:320px; background:#000; }
-#video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:none; }
+#video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:none; transform:scaleX(-1); }
 #canvas { position:absolute; inset:0; width:100%; height:100%; }
 .placeholder { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; color:rgba(0,255,231,.3); }
 .cam-icon { font-size:2.5rem; animation:float 3s ease-in-out infinite; }
@@ -264,14 +264,15 @@ function render(){
   ctx.clearRect(0,0,W,H);
 
   ctx.save();
-  ctx.translate(W,0);
-  ctx.scale(-1,1);
 
   faceData.forEach(d => {
     const b  = d.detection.box;
     const sx = W / video.videoWidth;
     const sy = H / video.videoHeight;
-    const x=b.x*sx, y=b.y*sy, w=b.width*sx, h=b.height*sy;
+    // Mirror X to match CSS-mirrored video
+    const w=b.width*sx, h=b.height*sy;
+    const x = W - (b.x*sx) - w;
+    const y = b.y*sy;
 
     // Glow box
     ctx.shadowColor='#00ffe7'; ctx.shadowBlur=12;
