@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Syahrul AI Assistant</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/face-api.js/0.22.2/face-api.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -402,7 +402,7 @@
 <div class="container">
   <div class="header">
     <h1>SYAHRUL // AI</h1>
-    <p>PERSONAL ASSISTANT · FACE RECOGNITION · POWERED BY GABUT</p>
+    <p>PERSONAL ASSISTANT · FACE RECOGNITION · POWERED BY GEMINI</p>
   </div>
 
   <div class="status-bar">
@@ -666,11 +666,16 @@ async function callGemini(text, isGreeting) {
     });
 
     const data = await res.json();
+    console.log('Gemini raw response:', JSON.stringify(data));
     if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
       return data.candidates[0].content.parts[0].text;
     }
-    return 'Sinyal lemah, coba lagi ya Bos...';
+    if (data.error) {
+      return 'Error API: ' + data.error.message;
+    }
+    return 'Respons kosong dari AI, coba lagi Bos.';
   } catch (e) {
+    console.error('Gemini fetch error:', e);
     return 'Koneksi error: ' + e.message;
   }
 }
