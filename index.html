@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Syahrul AI Assistant</title>
 <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -16,138 +15,68 @@
   --glass: rgba(0,255,231,0.05);
 }
 * { margin:0; padding:0; box-sizing:border-box; }
-body {
-  background: var(--dark);
-  color: var(--neon);
-  font-family: 'Rajdhani', sans-serif;
-  min-height: 100vh;
-  overflow-x: hidden;
-}
+body { background:var(--dark); color:var(--neon); font-family:'Rajdhani',sans-serif; min-height:100vh; overflow-x:hidden; }
 body::before {
-  content:'';
-  position:fixed; inset:0;
-  background-image:
-    linear-gradient(rgba(0,255,231,0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0,255,231,0.03) 1px, transparent 1px);
-  background-size: 40px 40px;
-  z-index:0;
-  animation: gridMove 20s linear infinite;
+  content:''; position:fixed; inset:0;
+  background-image: linear-gradient(rgba(0,255,231,0.03) 1px,transparent 1px), linear-gradient(90deg,rgba(0,255,231,0.03) 1px,transparent 1px);
+  background-size:40px 40px; z-index:0; animation:gridMove 20s linear infinite;
 }
-@keyframes gridMove { to { background-position: 40px 40px; } }
-
-.container {
-  position:relative; z-index:1;
-  max-width:900px; margin:0 auto;
-  padding:16px; display:flex;
-  flex-direction:column; gap:14px;
-}
+@keyframes gridMove { to { background-position:40px 40px; } }
+.container { position:relative; z-index:1; max-width:900px; margin:0 auto; padding:16px; display:flex; flex-direction:column; gap:14px; }
 .header { text-align:center; padding:16px 0 6px; }
 .header h1 {
-  font-family:'Orbitron',monospace;
-  font-size:clamp(1.2rem,5vw,2rem);
-  font-weight:900; letter-spacing:4px;
-  background:linear-gradient(90deg,var(--neon),var(--neon2),var(--neon));
-  background-size:200%;
-  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-  animation:shimmer 3s linear infinite;
+  font-family:'Orbitron',monospace; font-size:clamp(1.2rem,5vw,2rem); font-weight:900; letter-spacing:4px;
+  background:linear-gradient(90deg,var(--neon),var(--neon2),var(--neon)); background-size:200%;
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; animation:shimmer 3s linear infinite;
 }
 @keyframes shimmer { to { background-position:200%; } }
 .header p { font-size:.72rem; color:rgba(0,255,231,.45); letter-spacing:2px; margin-top:4px; }
 
-.status-bar {
-  display:flex; align-items:center; gap:10px;
-  padding:9px 14px;
-  background:var(--glass);
-  border:1px solid rgba(0,255,231,.15);
-  border-radius:8px; font-size:.76rem; letter-spacing:1px;
-}
+.status-bar { display:flex; align-items:center; gap:10px; padding:9px 14px; background:var(--glass); border:1px solid rgba(0,255,231,.15); border-radius:8px; font-size:.76rem; letter-spacing:1px; }
 .dot { width:8px; height:8px; border-radius:50%; background:#ff4444; flex-shrink:0; }
 .dot.on { background:var(--neon); box-shadow:0 0 8px var(--neon); animation:pulse 1.5s infinite; }
 @keyframes pulse { 50% { opacity:.4; } }
 
 .stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
-.stat-card {
-  background:var(--glass);
-  border:1px solid rgba(0,255,231,.15);
-  border-radius:8px; padding:10px; text-align:center;
-}
+.stat-card { background:var(--glass); border:1px solid rgba(0,255,231,.15); border-radius:8px; padding:10px; text-align:center; }
 .stat-label { font-size:.58rem; letter-spacing:1.5px; color:rgba(0,255,231,.4); font-family:'Orbitron',monospace; margin-bottom:4px; }
-.stat-val { font-size:1.1rem; font-weight:700; font-family:'Orbitron',monospace; color:var(--neon); text-shadow:0 0 10px var(--neon); }
-.stat-val.y { color:var(--neon3); text-shadow:0 0 10px var(--neon3); }
+.stat-val { font-size:1rem; font-weight:700; font-family:'Orbitron',monospace; color:var(--neon); text-shadow:0 0 10px var(--neon); }
+.stat-val.emo { color:var(--neon3); text-shadow:0 0 10px var(--neon3); font-size:1.4rem; }
 
 .cam-section { background:#000; border:1px solid rgba(0,255,231,.2); border-radius:12px; overflow:hidden; }
-.cam-wrap {
-  position:relative; width:100%;
-  aspect-ratio:4/3; max-height:320px;
-  background:#000;
-}
-
-/* Video fills the wrap, no transform on it */
-#video {
-  position:absolute; inset:0;
-  width:100%; height:100%;
-  object-fit:cover;
-  display:none;
-}
-
-/* Canvas on top, same size */
-#canvas {
-  position:absolute; inset:0;
-  width:100%; height:100%;
-}
-
-.placeholder {
-  position:absolute; inset:0;
-  display:flex; flex-direction:column;
-  align-items:center; justify-content:center;
-  gap:10px; color:rgba(0,255,231,.3);
-}
+.cam-wrap { position:relative; width:100%; aspect-ratio:4/3; max-height:320px; background:#000; }
+#video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:none; }
+#canvas { position:absolute; inset:0; width:100%; height:100%; }
+.placeholder { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; color:rgba(0,255,231,.3); }
 .cam-icon { font-size:2.5rem; animation:float 3s ease-in-out infinite; }
 @keyframes float { 50% { transform:translateY(-8px); } }
-
 .corner { position:absolute; width:18px; height:18px; border-color:var(--neon); border-style:solid; z-index:2; }
 .corner.tl { top:8px; left:8px; border-width:2px 0 0 2px; }
 .corner.tr { top:8px; right:8px; border-width:2px 2px 0 0; }
 .corner.bl { bottom:8px; left:8px; border-width:0 0 2px 2px; }
 .corner.br { bottom:8px; right:8px; border-width:0 2px 2px 0; }
 
-.g-badge {
-  position:absolute; bottom:12px; left:50%; transform:translateX(-50%);
+/* Emotion badge */
+.emo-badge {
+  position:absolute; top:10px; right:10px;
   background:rgba(0,0,0,.8); border:1px solid var(--neon3);
-  border-radius:20px; padding:5px 14px;
-  font-family:'Orbitron',monospace; font-size:.72rem;
+  border-radius:12px; padding:6px 12px;
+  font-family:'Orbitron',monospace; font-size:.7rem;
   color:var(--neon3); text-shadow:0 0 8px var(--neon3);
   display:none; z-index:3; white-space:nowrap;
 }
-.g-badge.show { display:block; animation:pop .25s ease; }
-@keyframes pop { from { transform:translateX(-50%) scale(.85); opacity:0; } to { transform:translateX(-50%) scale(1); opacity:1; } }
+.emo-badge.show { display:flex; align-items:center; gap:6px; animation:pop .25s ease; }
+@keyframes pop { from { transform:scale(.85); opacity:0; } to { transform:scale(1); opacity:1; } }
 
-.btn-start {
-  width:100%; padding:12px;
-  background:transparent; border:1px solid var(--neon);
-  color:var(--neon); font-family:'Orbitron',monospace;
-  font-size:.72rem; font-weight:700; letter-spacing:3px;
-  cursor:pointer; transition:all .3s; position:relative; overflow:hidden;
-}
+.btn-start { width:100%; padding:12px; background:transparent; border:1px solid var(--neon); color:var(--neon); font-family:'Orbitron',monospace; font-size:.72rem; font-weight:700; letter-spacing:3px; cursor:pointer; transition:all .3s; position:relative; overflow:hidden; }
 .btn-start::before { content:''; position:absolute; inset:0; background:var(--neon); transform:translateX(-100%); transition:transform .3s; z-index:-1; }
 .btn-start:hover::before { transform:translateX(0); }
 .btn-start:hover { color:var(--dark); }
 .btn-start:disabled { opacity:.4; cursor:not-allowed; }
 
-.chat-section {
-  background:var(--glass); border:1px solid rgba(0,255,231,.15);
-  border-radius:12px; overflow:hidden; display:flex; flex-direction:column;
-}
-.chat-hdr {
-  padding:9px 14px; border-bottom:1px solid rgba(0,255,231,.1);
-  font-family:'Orbitron',monospace; font-size:.62rem;
-  letter-spacing:2px; color:rgba(0,255,231,.55);
-}
-#chatBox {
-  height:250px; overflow-y:auto; padding:13px;
-  display:flex; flex-direction:column; gap:10px;
-  scrollbar-width:thin; scrollbar-color:rgba(0,255,231,.2) transparent;
-}
+.chat-section { background:var(--glass); border:1px solid rgba(0,255,231,.15); border-radius:12px; overflow:hidden; display:flex; flex-direction:column; }
+.chat-hdr { padding:9px 14px; border-bottom:1px solid rgba(0,255,231,.1); font-family:'Orbitron',monospace; font-size:.62rem; letter-spacing:2px; color:rgba(0,255,231,.55); }
+#chatBox { height:250px; overflow-y:auto; padding:13px; display:flex; flex-direction:column; gap:10px; scrollbar-width:thin; scrollbar-color:rgba(0,255,231,.2) transparent; }
 .msg { max-width:82%; padding:9px 13px; border-radius:10px; font-size:.86rem; line-height:1.5; animation:msgIn .3s ease; }
 @keyframes msgIn { from { opacity:0; transform:translateY(8px); } }
 .msg.ai { align-self:flex-start; background:rgba(0,255,231,.08); border:1px solid rgba(0,255,231,.2); color:rgba(0,255,231,.9); border-bottom-left-radius:2px; }
@@ -167,26 +96,24 @@ body::before {
 
 /* Modal */
 .modal-ov { position:fixed; inset:0; background:rgba(0,0,0,.88); backdrop-filter:blur(6px); z-index:100; display:flex; align-items:center; justify-content:center; padding:20px; }
-.modal-box { background:#050a0e; border:1px solid rgba(0,255,231,.3); border-radius:16px; padding:28px 22px; width:100%; max-width:370px; text-align:center; box-shadow:0 0 40px rgba(0,255,231,.1); }
+.modal-box { background:#050a0e; border:1px solid rgba(0,255,231,.3); border-radius:16px; padding:28px 22px; width:100%; max-width:370px; text-align:center; }
 .modal-icon { font-size:2.2rem; margin-bottom:10px; }
 .modal-title { font-family:'Orbitron',monospace; font-size:.95rem; font-weight:700; letter-spacing:2px; color:var(--neon); margin-bottom:8px; }
 .modal-sub { font-size:.75rem; color:rgba(0,255,231,.4); margin-bottom:18px; line-height:1.6; }
 .modal-input { width:100%; padding:11px 14px; background:rgba(0,255,231,.05); border:1px solid rgba(0,255,231,.25); border-radius:8px; color:#fff; font-family:'Rajdhani',sans-serif; font-size:.93rem; outline:none; margin-bottom:10px; transition:border .2s; }
 .modal-input:focus { border-color:var(--neon); }
 .modal-btn { width:100%; padding:12px; background:var(--neon); border:none; border-radius:8px; color:var(--dark); font-family:'Orbitron',monospace; font-size:.75rem; font-weight:700; letter-spacing:2px; cursor:pointer; }
-.modal-btn:hover { opacity:.85; }
 .modal-hint { font-size:.65rem; color:rgba(0,255,231,.3); margin-top:10px; line-height:1.6; }
 .modal-hint a { color:rgba(0,255,231,.5); }
 </style>
 </head>
 <body>
 
-<!-- Modal -->
 <div class="modal-ov" id="modal">
   <div class="modal-box">
     <div class="modal-icon">🔑</div>
     <div class="modal-title">API KEY</div>
-    <div class="modal-sub">Key disimpan sementara di memori browser.<br>Aman, hilang otomatis saat tab ditutup.</div>
+    <div class="modal-sub">Key disimpan sementara di memori.<br>Hilang otomatis saat tab ditutup.</div>
     <input type="password" class="modal-input" id="keyInput" placeholder="AIzaSy..." onkeydown="if(event.key==='Enter')saveKey()">
     <button class="modal-btn" onclick="saveKey()">⚡ MULAI SISTEM</button>
     <div class="modal-hint">Gratis di <a href="https://aistudio.google.com" target="_blank">aistudio.google.com</a></div>
@@ -196,7 +123,7 @@ body::before {
 <div class="container">
   <div class="header">
     <h1>SYAHRUL // AI</h1>
-    <p>FACE · AGE · GESTURE · POWERED BY GEMINI</p>
+    <p>FACE · AGE · EMOTION · POWERED BY GEMINI</p>
   </div>
 
   <div class="status-bar">
@@ -207,11 +134,11 @@ body::before {
   <div class="stats-row">
     <div class="stat-card"><div class="stat-label">WAJAH</div><div class="stat-val" id="sF">—</div></div>
     <div class="stat-card"><div class="stat-label">PERKIRAAN UMUR</div><div class="stat-val" id="sA">—</div></div>
-    <div class="stat-card"><div class="stat-label">JARI TERANGKAT</div><div class="stat-val y" id="sH">—</div></div>
+    <div class="stat-card"><div class="stat-label">EMOSI</div><div class="stat-val emo" id="sE">—</div></div>
   </div>
 
   <div class="cam-section">
-    <div class="cam-wrap" id="camWrap">
+    <div class="cam-wrap">
       <div class="corner tl"></div><div class="corner tr"></div>
       <div class="corner bl"></div><div class="corner br"></div>
       <div class="placeholder" id="ph">
@@ -220,7 +147,7 @@ body::before {
       </div>
       <video id="video" autoplay muted playsinline></video>
       <canvas id="canvas"></canvas>
-      <div class="g-badge" id="gbadge"></div>
+      <div class="emo-badge" id="emoBadge"></div>
     </div>
     <button class="btn-start" id="startBtn" disabled onclick="startCam()">◉ AKTIFKAN KAMERA</button>
   </div>
@@ -228,7 +155,7 @@ body::before {
   <div class="chat-section">
     <div class="chat-hdr">◈ TERMINAL KOMUNIKASI</div>
     <div id="chatBox">
-      <div class="msg ai"><div class="msg-lbl">SYS-AI</div>Aktifkan kamera dulu Bos! Aku bisa deteksi wajah, estimasi umur, dan hitung jari. Setelah itu ngobrol bebas! 🤙</div>
+      <div class="msg ai"><div class="msg-lbl">SYS-AI</div>Aktifkan kamera Bos! Aku bisa deteksi wajah, estimasi umur, dan baca emosi kamu. Ngobrol bebas setelahnya! 🤙</div>
     </div>
     <div class="input-area">
       <input type="text" id="chatInput" placeholder="Ketik pesan..." onkeydown="if(event.key==='Enter')sendMsg()">
@@ -238,37 +165,32 @@ body::before {
 </div>
 
 <script>
-// ── CONFIG ──────────────────────────────────────────────
-const USER_NAME   = "Bos Syahrul";
-const MODEL_URL   = "https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights/";
+const USER_NAME = "Bos Syahrul";
+const MODEL_URL = "https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights/";
 let API_KEY = "", GEMINI_URL = "";
 
-// ── STATE ────────────────────────────────────────────────
 let stream = null;
 let chatHistory = [];
-let lastFingers = -1, gTimeout = null;
-let faceData = [];   // latest face detections
-let handData = null; // latest hand results
-let mpHands  = null;
-let handBusy = false;
+let faceData = [];
+let currentEmotion = "—";
+let lastFaceTime = 0;
 
-// ── DOM ──────────────────────────────────────────────────
-const video    = document.getElementById('video');
-const canvas   = document.getElementById('canvas');
-const ctx      = canvas.getContext('2d');
-const dot      = document.getElementById('dot');
-const stTxt    = document.getElementById('statusTxt');
-const startBtn = document.getElementById('startBtn');
-const gbadge   = document.getElementById('gbadge');
-const chatBox  = document.getElementById('chatBox');
-const chatInput= document.getElementById('chatInput');
+const video     = document.getElementById('video');
+const canvas    = document.getElementById('canvas');
+const ctx       = canvas.getContext('2d');
+const dot       = document.getElementById('dot');
+const statusTxt = document.getElementById('statusTxt');
+const startBtn  = document.getElementById('startBtn');
+const emoBadge  = document.getElementById('emoBadge');
+const chatBox   = document.getElementById('chatBox');
+const chatInput = document.getElementById('chatInput');
 const sF = document.getElementById('sF');
 const sA = document.getElementById('sA');
-const sH = document.getElementById('sH');
+const sE = document.getElementById('sE');
 
-function setStatus(t, on){ stTxt.textContent=t; dot.className='dot'+(on?' on':''); }
+function setStatus(t, on){ statusTxt.textContent=t; dot.className='dot'+(on?' on':''); }
 
-// ── MODAL ────────────────────────────────────────────────
+// ── MODAL ──
 function saveKey(){
   const k = document.getElementById('keyInput').value.trim();
   if(!k.startsWith('AIza')){
@@ -282,27 +204,23 @@ function saveKey(){
   loadModels();
 }
 
-// ── LOAD MODELS ──────────────────────────────────────────
+// ── LOAD MODELS ──
 async function loadModels(){
   setStatus('Memuat model wajah...', false);
   try {
     await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+    setStatus('Memuat model usia...', false);
     await faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL);
-    setStatus('Model wajah siap! Memuat MediaPipe...', false);
-
-    mpHands = new Hands({ locateFile: f=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}` });
-    mpHands.setOptions({ maxNumHands:1, modelComplexity:0, minDetectionConfidence:.6, minTrackingConfidence:.5 });
-    mpHands.onResults(r=>{ handData=r; });
-    await mpHands.initialize();
-
-    setStatus('Siap! Klik tombol untuk aktifkan kamera', false);
+    setStatus('Memuat model ekspresi...', false);
+    await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
+    setStatus('Semua model siap! Klik tombol untuk mulai', false);
     startBtn.disabled = false;
   } catch(e){
-    setStatus('Gagal: '+e.message, false);
+    setStatus('Gagal muat model: '+e.message, false);
   }
 }
 
-// ── START CAMERA ─────────────────────────────────────────
+// ── START CAMERA ──
 async function startCam(){
   try {
     stream = await navigator.mediaDevices.getUserMedia({ video:{facingMode:'user'}, audio:false });
@@ -312,66 +230,50 @@ async function startCam(){
     startBtn.disabled = true;
     startBtn.textContent = '◉ KAMERA AKTIF';
     setStatus('Kamera aktif...', true);
-
     await new Promise(r => video.addEventListener('loadedmetadata', r, {once:true}));
     canvas.width  = video.videoWidth;
     canvas.height = video.videoHeight;
-
-    // Single master loop
     masterLoop();
   } catch(e){
     setStatus('Gagal kamera: '+e.message, false);
   }
 }
 
-// ── MASTER LOOP ──────────────────────────────────────────
-// Everything in ONE rAF loop: send to MediaPipe, draw, face detect on interval
-let lastFaceTime = 0;
-
-async function masterLoop(){
+// ── MASTER LOOP ──
+function masterLoop(){
   if(!stream) return;
-
   const now = performance.now();
 
-  // 1. Send frame to MediaPipe (non-blocking, if not busy)
-  if(!handBusy && mpHands){
-    handBusy = true;
-    mpHands.send({image: video}).finally(()=>{ handBusy=false; });
-  }
-
-  // 2. Face detection every 1000ms (cheap polling)
-  if(now - lastFaceTime > 1000){
+  // Face detection every 800ms
+  if(now - lastFaceTime > 800){
     lastFaceTime = now;
     faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({scoreThreshold:.4}))
       .withAgeAndGender()
-      .then(d => { faceData = d; updateFaceStats(d); })
+      .withFaceExpressions()
+      .then(d => { faceData = d; updateStats(d); })
       .catch(()=>{});
   }
 
-  // 3. Render everything onto canvas
   render();
-
   requestAnimationFrame(masterLoop);
 }
 
-// ── RENDER ───────────────────────────────────────────────
+// ── RENDER ──
 function render(){
   const W = canvas.width, H = canvas.height;
   ctx.clearRect(0,0,W,H);
 
-  // Mirror transform for all drawing
   ctx.save();
   ctx.translate(W,0);
   ctx.scale(-1,1);
 
-  // Draw faces
   faceData.forEach(d => {
-    const b = d.detection.box;
+    const b  = d.detection.box;
     const sx = W / video.videoWidth;
     const sy = H / video.videoHeight;
     const x=b.x*sx, y=b.y*sy, w=b.width*sx, h=b.height*sy;
 
-    // Box
+    // Glow box
     ctx.shadowColor='#00ffe7'; ctx.shadowBlur=12;
     ctx.strokeStyle='#00ffe7'; ctx.lineWidth=2;
     ctx.strokeRect(x,y,w,h);
@@ -383,91 +285,79 @@ function render(){
       ctx.beginPath(); ctx.moveTo(cx+dx*c,cy); ctx.lineTo(cx,cy); ctx.lineTo(cx,cy+dy*c); ctx.stroke();
     });
 
-    // Age label
+    // Top label: age + gender
     const age = Math.round(d.age);
     const g   = d.gender==='male'?'♂':'♀';
-    ctx.fillStyle='rgba(0,0,0,.75)';
-    ctx.fillRect(x, y-26, w, 24);
+    ctx.fillStyle='rgba(0,0,0,.8)';
+    ctx.fillRect(x, y-28, w, 26);
     ctx.fillStyle='#00ffe7';
     ctx.font='bold 12px monospace';
     ctx.textAlign='center';
-    ctx.fillText(`${g} ~${age} thn`, x+w/2, y-9);
-  });
+    ctx.fillText(`${g} ~${age} thn`, x+w/2, y-11);
 
-  // Draw hands (landmarks already in mirrored space from MediaPipe)
-  if(handData?.multiHandLandmarks){
-    handData.multiHandLandmarks.forEach((lm, idx) => {
-      drawHand(lm);
-      const hd = handData.multiHandedness[idx].label;
-      const cnt = countFingers(lm, hd);
-      updateHandStats(cnt);
-    });
-    if(!handData.multiHandLandmarks.length){
-      sH.textContent='—'; lastFingers=-1;
+    // Bottom label: emotion
+    if(d.expressions){
+      const emo = getTopEmotion(d.expressions);
+      const emoInfo = emotionMap[emo] || {emoji:'😐', label:'Netral', color:'#00ffe7'};
+      ctx.fillStyle='rgba(0,0,0,.8)';
+      ctx.fillRect(x, y+h+2, w, 24);
+      ctx.fillStyle = emoInfo.color;
+      ctx.font='bold 11px monospace';
+      ctx.fillText(`${emoInfo.emoji} ${emoInfo.label}`, x+w/2, y+h+17);
     }
-  }
+  });
 
   ctx.restore();
 }
 
-// ── DRAW HAND ────────────────────────────────────────────
-function drawHand(lm){
-  const W=canvas.width, H=canvas.height;
-  const conns=[[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[9,10],[10,11],[11,12],[13,14],[14,15],[15,16],[17,18],[18,19],[19,20],[0,17],[5,9],[9,13],[13,17]];
-  ctx.strokeStyle='#ffe700'; ctx.lineWidth=2; ctx.shadowColor='#ffe700'; ctx.shadowBlur=6;
-  conns.forEach(([a,b])=>{
-    ctx.beginPath();
-    ctx.moveTo(lm[a].x*W, lm[a].y*H);
-    ctx.lineTo(lm[b].x*W, lm[b].y*H);
-    ctx.stroke();
-  });
-  [4,8,12,16,20].forEach(i=>{
-    ctx.beginPath(); ctx.arc(lm[i].x*W, lm[i].y*H, 5,0,Math.PI*2);
-    ctx.fillStyle='#ffe700'; ctx.fill();
-  });
-  ctx.shadowBlur=0;
+// ── EMOTION ──
+const emotionMap = {
+  happy:     { emoji:'😄', label:'SENANG',   color:'#ffe700' },
+  sad:       { emoji:'😢', label:'SEDIH',    color:'#64b5f6' },
+  angry:     { emoji:'😠', label:'MARAH',    color:'#ff5252' },
+  fearful:   { emoji:'😨', label:'TAKUT',    color:'#ce93d8' },
+  disgusted: { emoji:'🤢', label:'JIJIK',    color:'#a5d6a7' },
+  surprised: { emoji:'😲', label:'KAGET',    color:'#ffcc02' },
+  neutral:   { emoji:'😐', label:'NETRAL',   color:'#00ffe7' },
+};
+
+function getTopEmotion(expressions){
+  return Object.entries(expressions).sort((a,b)=>b[1]-a[1])[0][0];
 }
 
-// ── COUNT FINGERS ────────────────────────────────────────
-function countFingers(lm, hand){
-  let n=0;
-  // Thumb: x-axis, account for mirror (MediaPipe gives un-mirrored coords)
-  // After our ctx mirror, Left hand in frame = Right in mediapipe
-  const thumbUp = hand==='Right' ? lm[4].x < lm[3].x : lm[4].x > lm[3].x;
-  if(thumbUp) n++;
-  // 4 fingers: tip.y < pip.y = extended
-  [[8,6],[12,10],[16,14],[20,18]].forEach(([tip,pip])=>{ if(lm[tip].y < lm[pip].y) n++; });
-  return n;
-}
-
-// ── STATS ─────────────────────────────────────────────────
-function updateFaceStats(detections){
+function updateStats(detections){
   if(detections.length){
-    const age = Math.round(detections[0].age);
+    const d   = detections[0];
+    const age = Math.round(d.age);
     sF.textContent = detections.length;
     sA.textContent = `~${age}`;
-    setStatus(`Wajah terdeteksi · ~${age} thn · ${detections[0].gender}`, true);
+
+    if(d.expressions){
+      const emo = getTopEmotion(d.expressions);
+      const info = emotionMap[emo] || {emoji:'😐', label:'NETRAL', color:'#00ffe7'};
+      currentEmotion = info.label;
+
+      sE.textContent = info.emoji;
+      sE.style.textShadow = `0 0 12px ${info.color}`;
+
+      // Badge
+      emoBadge.innerHTML = `<span>${info.emoji}</span><span>${info.label}</span>`;
+      emoBadge.style.borderColor = info.color;
+      emoBadge.style.color = info.color;
+      emoBadge.style.textShadow = `0 0 8px ${info.color}`;
+      emoBadge.classList.add('show');
+
+      setStatus(`Wajah: ~${age} thn · ${d.gender} · ${info.emoji} ${info.label}`, true);
+    }
   } else {
     sF.textContent='0'; sA.textContent='—';
+    sE.textContent='—'; currentEmotion='—';
+    emoBadge.classList.remove('show');
     setStatus('Tidak ada wajah...', true);
   }
 }
 
-const gNames={0:'✊ Kepalan',1:'☝️ Satu',2:'✌️ Dua',3:'🤟 Tiga',4:'🖖 Empat',5:'🖐️ Lima'};
-function updateHandStats(cnt){
-  sH.textContent = cnt;
-  if(cnt !== lastFingers){
-    lastFingers = cnt;
-    gbadge.textContent = gNames[cnt]||`${cnt} Jari`;
-    gbadge.classList.remove('show');
-    void gbadge.offsetWidth;
-    gbadge.classList.add('show');
-    clearTimeout(gTimeout);
-    gTimeout = setTimeout(()=>gbadge.classList.remove('show'), 2000);
-  }
-}
-
-// ── CHAT ─────────────────────────────────────────────────
+// ── CHAT ──
 async function sendMsg(){
   const txt = chatInput.value.trim();
   if(!txt) return;
@@ -477,12 +367,15 @@ async function sendMsg(){
   addMsg('ai', null, true);
   document.getElementById('sendBtn').disabled=true;
 
-  let ctx2 = `Kamu adalah SYS-AI, asisten AI personal untuk "${USER_NAME}". Jawab Bahasa Indonesia, santai, futuristik, singkat. `;
-  if(faceData.length) ctx2 += `Wajah ${USER_NAME} terdeteksi, usia ~${Math.round(faceData[0].age)} tahun. `;
-  if(lastFingers>=0) ctx2 += `${lastFingers} jari terangkat. `;
+  let ctxStr = `Kamu adalah SYS-AI, asisten AI personal untuk "${USER_NAME}". Jawab Bahasa Indonesia, santai, futuristik, singkat. `;
+  if(faceData.length){
+    const age = Math.round(faceData[0].age);
+    ctxStr += `Deteksi: wajah ~${age} tahun, ${faceData[0].gender}. `;
+    if(currentEmotion !== '—') ctxStr += `Emosi terdeteksi: ${currentEmotion}. `;
+  }
 
   const msgs = [
-    {role:'user', parts:[{text:ctx2}]},
+    {role:'user', parts:[{text:ctxStr}]},
     {role:'model', parts:[{text:'Siap!'}]},
     ...chatHistory.slice(-12)
   ];
@@ -496,7 +389,7 @@ async function sendMsg(){
 
 async function gemini(msgs){
   try {
-    const res = await fetch(GEMINI_URL,{
+    const res = await fetch(GEMINI_URL, {
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({contents:msgs, generationConfig:{temperature:.85, maxOutputTokens:400}})
