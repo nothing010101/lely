@@ -356,9 +356,99 @@
   }
   #sendBtn:hover { background: rgba(0,255,231,0.1); }
   #sendBtn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  /* API Key Modal */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(6px);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal-box {
+    background: #050a0e;
+    border: 1px solid rgba(0,255,231,0.3);
+    border-radius: 16px;
+    padding: 30px 24px;
+    width: 100%;
+    max-width: 380px;
+    text-align: center;
+    box-shadow: 0 0 40px rgba(0,255,231,0.1);
+  }
+  .modal-icon { font-size: 2.5rem; margin-bottom: 12px; }
+  .modal-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--neon);
+    margin-bottom: 8px;
+  }
+  .modal-sub {
+    font-size: 0.78rem;
+    color: rgba(0,255,231,0.45);
+    margin-bottom: 20px;
+    line-height: 1.5;
+  }
+  .modal-input {
+    width: 100%;
+    padding: 12px 16px;
+    background: rgba(0,255,231,0.05);
+    border: 1px solid rgba(0,255,231,0.25);
+    border-radius: 8px;
+    color: #fff;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.95rem;
+    outline: none;
+    margin-bottom: 12px;
+    transition: border 0.2s;
+  }
+  .modal-input:focus { border-color: var(--neon); }
+  .modal-btn {
+    width: 100%;
+    padding: 13px;
+    background: var(--neon);
+    border: none;
+    border-radius: 8px;
+    color: var(--dark);
+    font-family: 'Orbitron', monospace;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .modal-btn:hover { opacity: 0.85; }
+  .modal-hint {
+    font-size: 0.68rem;
+    color: rgba(0,255,231,0.3);
+    margin-top: 12px;
+    line-height: 1.5;
+  }
+  .modal-hint a { color: rgba(0,255,231,0.5); }
 </style>
 </head>
 <body>
+
+<!-- API Key Modal -->
+<div class="modal-overlay" id="apiModal">
+  <div class="modal-box">
+    <div class="modal-icon">🔑</div>
+    <div class="modal-title">MASUKKAN API KEY</div>
+    <div class="modal-sub">API key kamu disimpan sementara di memori browser.<br>Aman, tidak tersimpan di server maupun kode.</div>
+    <input type="password" class="modal-input" id="apiKeyInput" placeholder="AIzaSy..." onkeydown="if(event.key==='Enter') saveApiKey()">
+    <button class="modal-btn" onclick="saveApiKey()">⚡ MULAI SISTEM</button>
+    <div class="modal-hint">
+      Dapatkan API key gratis di <a href="https://aistudio.google.com" target="_blank">aistudio.google.com</a><br>
+      Key hilang otomatis saat tab ditutup
+    </div>
+  </div>
+</div>
+
 <div class="container">
   <div class="header">
     <h1>SYAHRUL // AI</h1>
@@ -424,8 +514,8 @@
 </div>
 
 <script>
-const API_KEY = "GANTI_API_KEY_DISINI";
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+let API_KEY = "";
+let GEMINI_URL = "";
 const USER_NAME = "Bos Syahrul";
 const MODEL_URL = "https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights/";
 
@@ -803,8 +893,34 @@ function removeTyping() {
   if (t) t.remove();
 }
 
+
+// =====================
+// API KEY MODAL
+// =====================
+function showApiModal() {
+  document.getElementById('apiModal').style.display = 'flex';
+  setTimeout(() => document.getElementById('apiKeyInput').focus(), 100);
+}
+
+function saveApiKey() {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  if (!key || !key.startsWith('AIza')) {
+    document.getElementById('apiKeyInput').style.borderColor = '#ff4444';
+    document.getElementById('apiKeyInput').placeholder = 'Key tidak valid!';
+    setTimeout(() => {
+      document.getElementById('apiKeyInput').style.borderColor = '';
+      document.getElementById('apiKeyInput').placeholder = 'AIzaSy...';
+    }, 2000);
+    return;
+  }
+  API_KEY = key;
+  GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+  document.getElementById('apiModal').style.display = 'none';
+  loadModels();
+}
+
 // Init
-loadModels();
+showApiModal();
 </script>
 </body>
 </html>
