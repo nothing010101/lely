@@ -623,8 +623,7 @@ async function detectFaceLoop() {
         .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ scoreThreshold: 0.4 }))
         .withAgeAndGender();
 
-      // Clear canvas (only face layer)
-      ctx.clearRect(0, 0, overlay.width, overlay.height);
+      window._faceDetections = detections;
 
       if (detections.length > 0) {
         faceDetected = true;
@@ -637,48 +636,10 @@ async function detectFaceLoop() {
         const w = box.width * scaleX;
         const h = box.height * scaleY;
 
-        // Draw face box
-        ctx.save();
-        ctx.shadowColor = '#00ffe7';
-        ctx.shadowBlur = 12;
-        ctx.strokeStyle = '#00ffe7';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(x, y, w, h);
-        ctx.restore();
-
-        // Corner accents
-        const cs = 10;
-        ctx.strokeStyle = '#00ffe7';
-        ctx.lineWidth = 3;
-        [[x,y,1,1],[x+w,y,-1,1],[x,y+h,1,-1],[x+w,y+h,-1,-1]].forEach(([cx,cy,dx,dy]) => {
-          ctx.beginPath();
-          ctx.moveTo(cx + dx*cs, cy);
-          ctx.lineTo(cx, cy);
-          ctx.lineTo(cx, cy + dy*cs);
-          ctx.stroke();
-        });
-
-        // Age label above box
         const age = Math.round(d.age);
-        const gender = d.gender === 'male' ? '♂' : '♀';
-        ctx.save();
-        ctx.fillStyle = 'rgba(0,0,0,0.7)';
-        ctx.fillRect(x, y - 28, w, 26);
-        ctx.fillStyle = '#00ffe7';
-        ctx.font = 'bold 13px Orbitron, monospace';
-        ctx.textAlign = 'center';
-        ctx.fillText(`${gender} ~${age} thn`, x + w/2, y - 10);
-        ctx.restore();
-
-        // Update stats
-        statFace.textContent = detections.length;
-        statAge.textContent = `~${age}`;
-
         setStatus(`Wajah terdeteksi · ~${age} tahun · ${d.gender}`, true);
       } else {
         faceDetected = false;
-        statFace.textContent = '0';
-        statAge.textContent = '—';
         setStatus('Tidak ada wajah terdeteksi...', true);
       }
     } catch(e) {}
@@ -686,6 +647,77 @@ async function detectFaceLoop() {
     setTimeout(detect, 200); // 5fps untuk hemat baterai
   };
   detect();
+  startRenderLoop();
+}
+
+// Single unified render loop - no flicker!
+function startRenderLoop() {
+  const render = () => {
+    if (!stream) return;
+    ctx.clearRect(0, 0, overlay.width, overlay.height);
+
+    const detections = window._faceDetections || [];
+    const handResults = window._handResults;
+
+    // Draw faces
+    detections.forEach(d => {
+      const scaleX = overlay.width / video.videoWidth;
+      const scaleY = overlay.height / video.videoHeight;
+      const box = d.detection.box;
+      const x = box.x * scaleX;
+      const y = box.y * scaleY;
+      const w = box.width * scaleX;
+      const h = box.height * scaleY;
+
+      ctx.save();
+      ctx.shadowColor = '#00ffe7';
+      ctx.shadowBlur = 12;
+      ctx.strokeStyle = '#00ffe7';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x, y, w, h);
+      ctx.restore();
+
+      const cs = 10;
+      ctx.strokeStyle = '#00ffe7';
+      ctx.lineWidth = 3;
+      [[x,y,1,1],[x+w,y,-1,1],[x,y+h,1,-1],[x+w,y+h,-1,-1]].forEach(([cx,cy,dx,dy]) => {
+        ctx.beginPath();
+        ctx.moveTo(cx + dx*cs, cy);
+        ctx.lineTo(cx, cy);
+        ctx.lineTo(cx, cy + dy*cs);
+        ctx.stroke();
+      });
+
+      const age = Math.round(d.age);
+      const gender = d.gender === 'male' ? '♂' : '♀';
+      ctx.save();
+      ctx.fillStyle = 'rgba(0,0,0,0.7)';
+      ctx.fillRect(x, y - 28, w, 26);
+      ctx.fillStyle = '#00ffe7';
+      ctx.font = 'bold 13px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(`${gender} ~${age} thn`, x + w/2, y - 10);
+      ctx.restore();
+
+      statFace.textContent = detections.length;
+      statAge.textContent = `~${age}`;
+    });
+
+    if (detections.length === 0) {
+      statFace.textContent = '0';
+      statAge.textContent = '—';
+    }
+
+    // Draw hands
+    if (handResults) {
+      handResults.multiHandLandmarks.forEach(landmarks => {
+        drawHandSkeleton(landmarks);
+      });
+    }
+
+    requestAnimationFrame(render);
+  };
+  render();
 }
 
 // =====================
@@ -708,23 +740,20 @@ function onHandResults(results) {
     statHand.textContent = '—';
     lastFingerCount = -1;
     gestureBadge.classList.remove('show');
+    window._handResults = null;
     return;
   }
 
   handDetected = true;
+  window._handResults = results;
+
   let totalFingers = 0;
-
   results.multiHandLandmarks.forEach((landmarks, idx) => {
-    const handedness = results.multiHandedness[idx].label; // Left or Right
-    const fingers = countFingers(landmarks, handedness);
-    totalFingers += fingers;
-
-    // Draw hand skeleton on canvas
-    drawHandSkeleton(landmarks);
+    const handedness = results.multiHandedness[idx].label;
+    totalFingers += countFingers(landmarks, handedness);
   });
 
   statHand.textContent = totalFingers;
-
   if (totalFingers !== lastFingerCount) {
     lastFingerCount = totalFingers;
     showGesture(totalFingers);
